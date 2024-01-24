@@ -10,15 +10,15 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
     {
         private bool _stopSignaled;
 
-        private readonly MailChimpService _mailChimpService;
+        private readonly IMailchimpService _mailchimpService;
 
         private readonly ICacheService _cacheService;
 
-        public MailChimpCacheScheduledJob()
+        public MailChimpCacheScheduledJob(IMailchimpService mailchimpService, ICacheService cacheService)
         {
+            _mailchimpService = mailchimpService;
+            _cacheService = cacheService;
             IsStoppable = true;
-            _mailChimpService = ServiceLocator.Current.GetInstance<MailChimpService>();
-            _cacheService = ServiceLocator.Current.GetInstance<ICacheService>();
         }
 
         /// <summary>
@@ -36,11 +36,11 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
         public override string Execute()
         {
             //Call OnStatusChanged to periodically notify progress of job for manually started jobs
-            OnStatusChanged($"Starting execution of {this.GetType()}");
+            OnStatusChanged($"Starting execution of {GetType()}");
 
             // Clear Lists
-            this._cacheService.Remove(MailChimpConstants.ListIds);
-            var lists = this._mailChimpService.GetLists();
+            _cacheService.Remove(MailChimpConstants.ListIds);
+            var lists = _mailchimpService.GetLists();
             var cacheItemsUpdated = 0;
             foreach (var list in lists)
             {
@@ -49,22 +49,19 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
                     return "Stop of job was called";
                 }
 
-                this._cacheService.Remove(string.Format(MailChimpConstants.ListId, list.Id));
-                this._cacheService.Get(string.Format(MailChimpConstants.ListId, list.Id), 720, () =>
-                {
-                    return list;
-                });
+                _cacheService.Remove(string.Format(MailChimpConstants.ListId, list.Id));
+                _cacheService.Get(string.Format(MailChimpConstants.ListId, list.Id), 720, () => list);
 
-                this._cacheService.Remove(string.Format(MailChimpConstants.ListMergeFields, list.Id));
-                this._mailChimpService.GetFormFields(list.Id);
+                _cacheService.Remove(string.Format(MailChimpConstants.ListMergeFields, list.Id));
+                _mailchimpService.GetFormFields(list.Id);
 
                 cacheItemsUpdated++;
-                this.OnStatusChanged($"Cache Items Updated: {cacheItemsUpdated}");
+                OnStatusChanged($"Cache Items Updated: {cacheItemsUpdated}");
             }
 
             // Clear the dictionary
-            this._cacheService.Remove(MailChimpConstants.ListDictionaryItems);
-            this._mailChimpService.GetListsAsDictionary();
+            _cacheService.Remove(MailChimpConstants.ListDictionaryItems);
+            _mailchimpService.GetListsAsDictionary();
 
             //For long running jobs periodically check if stop is signaled and if so stop execution
 

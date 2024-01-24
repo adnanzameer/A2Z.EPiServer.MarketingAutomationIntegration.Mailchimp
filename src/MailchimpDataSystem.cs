@@ -3,27 +3,26 @@ using System.Linq;
 using EPiServer.Forms.Core;
 using EPiServer.Forms.Core.Internal.Autofill;
 using EPiServer.Forms.Core.Internal.ExternalSystem;
-using EPiServer.ServiceLocation;
 using Microsoft.AspNetCore.Http;
 
 namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
 {
     public class MailChimpDataSystem : IExternalSystem, IAutofillProvider
     {
-        private readonly MailChimpService _mailChimpService;
+        private readonly IMailchimpService _mailchimpService;
 
-        public MailChimpDataSystem()
+        public MailChimpDataSystem(IMailchimpService mailchimpService)
         {
-            _mailChimpService = ServiceLocator.Current.GetInstance<MailChimpService>();
+            _mailchimpService = mailchimpService;
         }
-
+        
         public virtual string Id => "MailChimpDataSystem";
 
         public virtual IEnumerable<IDatasource> Datasources
         {
             get
             {
-                var items = this._mailChimpService.GetListsAsDictionary();
+                var items = _mailchimpService.GetListsAsDictionary();
 
                 var select = items
                      .Select(x => new Datasource()
@@ -31,7 +30,7 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
                          Name = x.Value,
                          Id = x.Key,
                          OwnerSystem = this,
-                         Columns = this._mailChimpService.GetFormFieldsAsDictionary(x.Key)
+                         Columns = _mailchimpService.GetFormFieldsAsDictionary(x.Key)
                      });
 
                 return select;

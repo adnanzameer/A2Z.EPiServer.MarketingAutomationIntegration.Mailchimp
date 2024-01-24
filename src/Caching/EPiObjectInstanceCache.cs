@@ -16,7 +16,7 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp.Caching
 
         public override TValue Get<TValue>(string cacheKey) => _objectCacheService.Get(cacheKey) as TValue;
 
-        public override TValue Get<TValue>(string cacheKey, CacheEvictionPolicy cacheEvictionPolicy, Func<TValue> getItemCallback)
+        protected override TValue Get<TValue>(string cacheKey, CacheEvictionPolicy cacheEvictionPolicy, Func<TValue> getItemCallback)
         {
             var item = Get<TValue>(cacheKey);
             if (item == null)

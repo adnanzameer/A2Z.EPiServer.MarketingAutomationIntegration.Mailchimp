@@ -3,33 +3,34 @@ using System.Collections.Generic;
 using System.Linq;
 using A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp.Caching;
 using EPiServer.Logging;
-using EPiServer.ServiceLocation;
 using MailChimp.Net;
 using MailChimp.Net.Interfaces;
 using MailChimp.Net.Models;
+using Microsoft.Extensions.Options;
 
 namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
 {
-    [ServiceConfiguration(ServiceType = typeof(MailChimpService), Lifecycle = ServiceInstanceScope.Transient)]
-    public class MailChimpService
+    public class MailchimpService : IMailchimpService
     {
         private readonly IMailChimpManager _mailChimpManager;
+        private readonly IOptions<MarketingAutomationMailchimpOptions> _options;
 
         readonly ICacheService _cacheService;
 
         private const int CacheTimeout = 720; // in minutes
 
-        public MailChimpService(ICacheService cacheService)
+        public MailchimpService(ICacheService cacheService, IOptions<MarketingAutomationMailchimpOptions> options)
         {
             _cacheService = cacheService;
 
-            var mailChimpApiKey = "";
-            //if (PageHelper.SiteSettingsPage != null && !string.IsNullOrEmpty(PageHelper.SiteSettingsPage.MailChimpApiKey))
-            //{
-            //    mailChimpApiKey = PageHelper.SiteSettingsPage.MailChimpApiKey;
-            //}
+            if (string.IsNullOrWhiteSpace(options.Value.MailChimpApiKey))
+            {
+                throw new ArgumentException("Missing API Key for A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp");
+            }
 
-            _mailChimpManager = new MailChimpManager(mailChimpApiKey);
+            _options = options;
+
+            _mailChimpManager = new MailChimpManager(options.Value.MailChimpApiKey);
         }
 
         public List<List> GetLists()
@@ -49,7 +50,7 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
             return _cacheService.Get(MailChimpConstants.ListDictionaryItems, CacheTimeout, () =>
             {
                 var list = new Dictionary<string, string>();
-                var items = this.GetLists();
+                var items = GetLists();
                 foreach (var item in items)
                 {
                     if (!list.ContainsKey(item.Id))
@@ -66,7 +67,7 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
             var cacheKey = string.Format(MailChimpConstants.ListId, name);
             return _cacheService.Get(cacheKey, CacheTimeout, () =>
             {
-                var result = this.GetLists().FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                var result = GetLists().FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
                 return result;
             });
         }
@@ -74,23 +75,20 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
         public List GetListById(string id)
         {
             var cacheKey = string.Format(MailChimpConstants.ListId, id);
-            return this._cacheService.Get(cacheKey, CacheTimeout,
-                () => { return _mailChimpManager.Lists.GetAsync(id).GetAwaiter().GetResult(); });
+            return _cacheService.Get(cacheKey, CacheTimeout,
+                () => _mailChimpManager.Lists.GetAsync(id).GetAwaiter().GetResult());
         }
 
         public List<MergeField> GetFormFields(string listId)
         {
             return _cacheService.Get(string.Format(MailChimpConstants.ListMergeFields, listId), CacheTimeout,
-                () =>
-                {
-                    return _mailChimpManager.MergeFields.GetAllAsync(listId).GetAwaiter().GetResult().ToList();
-                });
+                () => _mailChimpManager.MergeFields.GetAllAsync(listId).GetAwaiter().GetResult().ToList());
         }
 
         public Dictionary<string, string> GetFormFieldsAsDictionary(string listId)
         {
             var dictionary = new Dictionary<string, string>() { { "EMAIL", "Email" } };
-            this.GetFormFields(listId)
+            GetFormFields(listId)
                   .Select(x => new KeyValuePair<string, string>(x.Tag, x.Name))
                   .ToList()
                   .ForEach(x => dictionary.Add(x.Key, x.Value));
@@ -104,32 +102,34 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
             {
                 var externalFields = GetFormFields(listId);
 
-                var member = new Member()
+                var member = new Member
                 {
                     EmailAddress = fields["EMAIL"],
                     StatusIfNew = Status.Pending
                 };
 
-                var sources = fields.FirstOrDefault(x => x.Key.Equals("CUSTOM-INTERESTS", StringComparison.OrdinalIgnoreCase)).Value.Split(',').ToList();
+                var sources = fields.Where(x => x.Key.StartsWith("CUSTOM-INTERESTS", StringComparison.OrdinalIgnoreCase)).ToList();
 
                 foreach (var externalField in externalFields.Where(externalField => fields.ContainsKey(externalField.Tag)))
                 {
                     member.MergeFields.Add(externalField.Tag, fields[externalField.Tag]);
                 }
 
-                foreach (var source in sources.Where(source => !string.IsNullOrEmpty(source)))
+                foreach (var source in sources)
                 {
-                    if (source.Trim().Equals("Feller News", StringComparison.OrdinalIgnoreCase))
+                    foreach (var option in _options.Value.OptionalInterests)
                     {
-                        member.Interests.Add("d24e1f759c", true);
-                    }
-                    else if (source.Trim().Equals("KNX News", StringComparison.OrdinalIgnoreCase))
-                    {
-                        member.Interests.Add("1c558ccf5f", true);
+                        if (source.Value.Equals(option.Key, StringComparison.OrdinalIgnoreCase))
+                        {
+                            member.Interests.Add(option.Value, true);
+                        }
                     }
                 }
 
-                member.Interests.Add("a5623146b8", true); //Datenschutz
+                foreach (var interest in _options.Value.RequiredInterests)
+                {
+                    member.Interests.Add(interest, true);
+                }
 
                 return _mailChimpManager.Members.AddOrUpdateAsync(listId, member).GetAwaiter().GetResult();
             }

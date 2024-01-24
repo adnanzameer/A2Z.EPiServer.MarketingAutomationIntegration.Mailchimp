@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using EPiServer.Forms.Core.PostSubmissionActor;
 using EPiServer.ServiceLocation;
+using Microsoft.Extensions.Options;
 
 namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
 {
     public class MailChimpPostActor : PostSubmissionActorBase
     {
-        readonly MailChimpService _mailChimpService;
+        readonly IMailchimpService _mailchimpService;
+        private readonly IOptions<MarketingAutomationMailchimpOptions> _options;
 
-        public MailChimpPostActor()
+        public MailChimpPostActor(IMailchimpService mailchimpService, IOptions<MarketingAutomationMailchimpOptions> options)
         {
-            _mailChimpService = ServiceLocator.Current.GetInstance<MailChimpService>();
+            _mailchimpService = mailchimpService;
+            _options = options;
         }
 
         public override object Run(object input)
@@ -23,7 +26,7 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
                 return submissionResult;
 
             var postedFormDataDictionary = new Dictionary<string, string>();
-           
+
             foreach (var pair in SubmissionData.Data)
             {
                 if (!pair.Key.ToLower().StartsWith("systemcolumn") && pair.Value != null)
@@ -32,16 +35,29 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
                 }
             }
 
-            var interests = SubmissionData.Data.FirstOrDefault(x =>
-                x.Value is string value && (value.Contains("Feller News", StringComparison.OrdinalIgnoreCase) ||
-                                            value.Contains("KNX News", StringComparison.OrdinalIgnoreCase))).Value;
+            var interests = new List<string>();
+            foreach (var valuePair in SubmissionData.Data.Where(x => x.Value is string))
+            {
+                foreach (var option in _options.Value.OptionalInterests)
+                {
+                    if (!string.IsNullOrWhiteSpace(option.Value) && valuePair.Value is string value && value.Equals(option.Key, StringComparison.OrdinalIgnoreCase))
+                    {
+                        interests.Add(value);
+                    }
+                }
+            }
 
             var mappings = base.ActiveExternalFieldMappingTable;
             if (mappings != null)
             {
                 var formDataAttributes = new Dictionary<string, string>();
-                if (interests is string formInterests)
-                    formDataAttributes.Add("CUSTOM-INTERESTS", formInterests);
+
+                var count = 1;
+                foreach (var interest in interests)
+                {
+                    formDataAttributes.Add("CUSTOM-INTERESTS" + count, interest);
+                    count += 1;
+                }
 
                 var listId = string.Empty;
                 foreach (var item in mappings)
@@ -62,12 +78,11 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
 
                 if (formDataAttributes.Count > 0)
                 {
-                    var member = _mailChimpService.Send(listId, formDataAttributes);
+                    var member = _mailchimpService.Send(listId, formDataAttributes);
                 }
             }
 
             return submissionResult;
         }
-
     }
 }
