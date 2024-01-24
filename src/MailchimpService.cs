@@ -23,7 +23,7 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
         {
             _cacheService = cacheService;
 
-            var mailChimpApiKey = "c6f6eb1408c7be7b8d9e46c747a1a7e8-us18";
+            var mailChimpApiKey = "";
             //if (PageHelper.SiteSettingsPage != null && !string.IsNullOrEmpty(PageHelper.SiteSettingsPage.MailChimpApiKey))
             //{
             //    mailChimpApiKey = PageHelper.SiteSettingsPage.MailChimpApiKey;
