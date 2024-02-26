@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using EPiServer.Forms.Core.PostSubmissionActor;
-using EPiServer.ServiceLocation;
 using Microsoft.Extensions.Options;
 
 namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp

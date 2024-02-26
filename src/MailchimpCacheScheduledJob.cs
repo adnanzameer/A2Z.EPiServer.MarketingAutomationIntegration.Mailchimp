@@ -1,7 +1,6 @@
 ﻿using A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp.Caching;
 using EPiServer.PlugIn;
 using EPiServer.Scheduler;
-using EPiServer.ServiceLocation;
 
 namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
 {
