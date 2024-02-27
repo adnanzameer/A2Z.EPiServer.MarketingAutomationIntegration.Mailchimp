@@ -6,11 +6,6 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddMarketingAutomationMailchimp(this IServiceCollection services)
-        {
-            return AddMarketingAutomationMailchimp(services, _ => { });
-        }
-
         public static IServiceCollection AddMarketingAutomationMailchimp(this IServiceCollection services, Action<MarketingAutomationMailchimpOptions> setupAction)
         {
             services.AddTransient<IMailchimpService, MailchimpService>();

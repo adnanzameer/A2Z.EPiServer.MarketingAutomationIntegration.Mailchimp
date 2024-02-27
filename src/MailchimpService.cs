@@ -108,13 +108,12 @@ namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
                     StatusIfNew = Status.Pending
                 };
 
-                var sources = fields.Where(x => x.Key.StartsWith("CUSTOM-INTERESTS", StringComparison.OrdinalIgnoreCase)).ToList();
-
                 foreach (var externalField in externalFields.Where(externalField => fields.ContainsKey(externalField.Tag)))
                 {
                     member.MergeFields.Add(externalField.Tag, fields[externalField.Tag]);
                 }
 
+                var sources = fields.Where(x => x.Key.StartsWith("CUSTOM-INTERESTS", StringComparison.OrdinalIgnoreCase)).ToList();
                 foreach (var source in sources)
                 {
                     foreach (var option in _options.Value.OptionalInterests)

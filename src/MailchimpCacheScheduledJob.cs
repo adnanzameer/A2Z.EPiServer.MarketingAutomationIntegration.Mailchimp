@@ -4,7 +4,7 @@ using EPiServer.Scheduler;
 
 namespace A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp
 {
-    [ScheduledPlugIn(DisplayName = "Mail Chimp Cache Manager", IntervalType = global::EPiServer.DataAbstraction.ScheduledIntervalType.Hours, Restartable = true, IntervalLength = 6)]
+    [ScheduledPlugIn(DisplayName = "[A2Z] Mailchimp Cache Manager", IntervalType = global::EPiServer.DataAbstraction.ScheduledIntervalType.Hours, Restartable = true, IntervalLength = 6)]
     public class MailChimpCacheScheduledJob : ScheduledJobBase
     {
         private bool _stopSignaled;
