@@ -4,13 +4,13 @@ The **A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp** is a freely avail
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U7U2STV29)
 
 ## Description
-[![Platform](https://img.shields.io/badge/Platform-.NET%20-blue.svg?style=flat)](https://docs.microsoft.com/en-us/dotnet/)
+[![Platform](https://img.shields.io/badge/Platform-.NET%205-blue.svg?style=flat)](https://docs.microsoft.com/en-us/dotnet/)
 [![Platform](https://img.shields.io/badge/Platform-.NET%206-blue.svg?style=flat)](https://docs.microsoft.com/en-us/dotnet/)
 [![Platform](https://img.shields.io/badge/Optimizely-%2012-blue.svg?style=flat)](http://world.episerver.com/cms/)
 [![Platform](https://img.shields.io/badge/EPiServer-%2012-orange.svg?style=flat)](http://world.episerver.com/cms/)
 
 
-The A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp package enhances Optimizely Forms by seamlessly integrating with Mailchimp, catering to both developers and marketers. It moves beyond the traditional use of Mailchimp's embedded forms for email list collection, enabling direct connection and data posting to a Mailchimp list via its API. This integration simplifies email marketing automation within Optimizely, offering a streamlined approach for audience engagement.
+The A2Z.EPiServer.MarketingAutomationIntegration.Mailchimp package enhances Optimizely Forms by seamlessly integrating with Mailchimp, catering to both developers and marketers. It moves beyond the traditional use of Mailchimp's embedded forms for email list collection, enabling direct connection and data posting to a Mailchimp list via its API. This integration simplifies email marketing automation within Optimizely, offering a streamlined approach to audience engagement.
 
 ### *This addon draws significant inspiration from a blog post by [Joshua Folkerts](https://world.optimizely.com/blogs/Joshua-Folkerts/Dates/2019/2/episerver-form-mailchimp-integration/).
 
